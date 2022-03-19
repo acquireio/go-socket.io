@@ -1,13 +1,11 @@
 package engineio
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 
 	"github.com/googollee/go-socket.io/engineio/frame"
 	"github.com/googollee/go-socket.io/engineio/packet"
@@ -66,10 +64,13 @@ func (c *client) NextReader() (session.FrameType, io.ReadCloser, error) {
 		}
 
 		switch pt {
-		case packet.PONG:
-			if err = c.conn.SetReadDeadline(time.Now().Add(c.params.PingInterval + c.params.PingTimeout)); err != nil {
+		case packet.PING:
+			var w io.WriteCloser
+			w, err = c.conn.NextWriter(frame.String, packet.PONG)
+			if err != nil {
 				return 0, nil, err
 			}
+			_ = w.Close()
 
 		case packet.CLOSE:
 			c.Close()
@@ -101,29 +102,4 @@ func (c *client) RemoteAddr() net.Addr {
 
 func (c *client) RemoteHeader() http.Header {
 	return c.conn.RemoteHeader()
-}
-
-func (c *client) serve() {
-	defer c.conn.Close()
-
-	for {
-		select {
-		case <-c.close:
-			return
-		case <-time.After(c.params.PingInterval):
-		}
-
-		w, err := c.conn.NextWriter(frame.String, packet.PING)
-		if err != nil {
-			return
-		}
-
-		if err := w.Close(); err != nil {
-			return
-		}
-
-		if err = c.conn.SetWriteDeadline(time.Now().Add(c.params.PingInterval + c.params.PingTimeout)); err != nil {
-			fmt.Printf("set writer's deadline error,msg:%s\n", err.Error())
-		}
-	}
 }

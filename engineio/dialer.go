@@ -23,7 +23,6 @@ func (d *Dialer) Dial(urlStr string, requestHeader http.Header) (Conn, error) {
 	}
 
 	query := u.Query()
-	query.Set("EIO", "3")
 	u.RawQuery = query.Encode()
 
 	var conn transport.Conn
@@ -74,8 +73,6 @@ func (d *Dialer) Dial(urlStr string, requestHeader http.Header) (Conn, error) {
 			transport: t.Name(),
 			close:     make(chan struct{}),
 		}
-
-		go ret.serve()
 
 		return ret, nil
 	}
