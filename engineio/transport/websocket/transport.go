@@ -33,6 +33,8 @@ type Transport struct {
 	Proxy       func(*http.Request) (*url.URL, error)
 	NetDial     func(network, addr string) (net.Conn, error)
 	CheckOrigin func(r *http.Request) bool
+
+	Jar http.CookieJar
 }
 
 // Default is default transport.
@@ -53,6 +55,7 @@ func (t *Transport) Dial(u *url.URL, requestHeader http.Header) (transport.Conn,
 		TLSClientConfig:  t.TLSClientConfig,
 		HandshakeTimeout: t.HandshakeTimeout,
 		Subprotocols:     t.Subprotocols,
+		Jar:              t.Jar,
 	}
 
 	switch u.Scheme {
